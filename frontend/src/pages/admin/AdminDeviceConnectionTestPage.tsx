@@ -156,7 +156,7 @@ export default function AdminDeviceConnectionTestPage() {
     setLoading(true)
     setError(null)
     try {
-      const raw = await apiPost<unknown>(`/api/v1/admin/devices/${deviceId}/connection-test`)
+      const raw = await apiPost<unknown>(`/api/v1/admin/devices/${deviceId}/connection-test`, {})
       const n = normalizePayload(raw)
       if (!n) {
         setData(null)
@@ -269,7 +269,10 @@ export default function AdminDeviceConnectionTestPage() {
                   <div className="border-b border-[#24303a] px-4 py-3">
                     <div className="text-base font-semibold text-slate-100">Connection result</div>
                     <div className="mt-1 text-sm text-slate-500">
-                      저장된 IP·포트·슬레이브로 접속해 등록된 태그 레지스터를 읽습니다 (MODBUS_TCP).
+                      저장된 IP·포트·슬레이브로 접속해 등록된 태그 레지스터를 읽습니다 (MODBUS_TCP). 백엔드가
+                      Docker이고 Modbus 대상이 같은 EC2 호스트의 프로세스라면 IP는{' '}
+                      <span className="font-mono text-slate-400">host.docker.internal</span> 또는 브리지 게이트웨이(
+                      예: <span className="font-mono text-slate-400">172.17.0.1</span>)를 쓰는 경우가 많습니다.
                     </div>
                   </div>
                   <div className="space-y-5 p-5">
