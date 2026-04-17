@@ -1,0 +1,4 @@
+# Overrides for local IDE runs (optional). Docker Compose sets DB_* via environment.
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mini_scada}

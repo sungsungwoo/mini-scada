@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: mini-scada
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mini_scada}
+    username: ${DB_USER:scada}
+    password: ${DB_PASSWORD:scada_secret}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when_authorized
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  jwt:
+    secret: ${JWT_SECRET_KEY:dev-secret-change-me-use-long-random-string-at-least-256-bits-for-hs256______}
+    expiration-ms: 86400000
+  mqtt:
+    enabled: ${MQTT_ENABLED:true}
+    broker-url: tcp://${MQTT_HOST:localhost}:${MQTT_PORT:1883}
+    client-id: mini-scada-backend
+    topic-prefix: /scada
+  polling:
+    scheduler-ms: 1000
+    initial-delay-ms: 15000

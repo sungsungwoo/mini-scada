@@ -1,0 +1,107 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:2.14.2-pg15
+    container_name: mini_scada_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER:-scada}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-scada_secret}
+      POSTGRES_DB: ${DB_NAME:-mini_scada}
+      TZ: UTC
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./infra/timescaledb/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mini_scada_mqtt
+    restart: always
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./infra/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/broker/uptime", "-C", "1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile
+    container_name: mini_scada_simulator
+    ports:
+      - "5020:5020"
+    volumes:
+      - ./simulator:/app
+    environment:
+      MODBUS_PORT: 5020
+      TZ: UTC
+    command: python app/simulator.py
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mini_scada_backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend:/app
+      - /root/.m2
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DB_HOST: timescaledb
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-mini_scada}
+      DB_USER: ${DB_USER:-scada}
+      DB_PASSWORD: ${DB_PASSWORD:-scada_secret}
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_WS_PORT: 9001
+      SIMULATOR_HOST: simulator
+      SIMULATOR_PORT: 5020
+      TZ: UTC
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+      simulator:
+        condition: service_started
+    command: ./mvnw spring-boot:run
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mini_scada_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      # 브라우저(호스트)가 API를 직접 호출 — 컨테이너 내부 localhost가 아님. 백엔드는 호스트 8080.
+      VITE_API_ORIGIN: http://localhost:8080
+      VITE_MQTT_WS_URL: ws://localhost:9001
+    depends_on:
+      - backend
+    # Dockerfile CMD: npm install 후 dev (node_modules 볼륨·바인드 마운트 동기화)
+
+volumes:
+  timescaledb_data:
