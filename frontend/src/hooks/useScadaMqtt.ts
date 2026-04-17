@@ -109,11 +109,17 @@ export function useScadaMqtt(options: UseScadaMqttOptions) {
     }
 
     setError(null)
-    const client = mqtt.connect(wsUrl, {
-      protocolVersion: 4,
-      reconnectPeriod: 3000,
-      connectTimeout: 10_000,
-    })
+    let client: MqttClient
+    try {
+      client = mqtt.connect(wsUrl, {
+        protocolVersion: 4,
+        reconnectPeriod: 3000,
+        connectTimeout: 10_000,
+      })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'MQTT connect failed')
+      return
+    }
     clientRef.current = client
 
     client.on('connect', () => {

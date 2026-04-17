@@ -11,7 +11,8 @@ node_modules
 dist
 dist-ssr
 
-# Env (Vite) — keep committed templates like .env.example only if you intend to share them
+# Env (Vite) — 운영 URL은 frontend/.env.production 에 커밋(클라이언트에 노출되는 공개 주소만).
+# PC 전용 덮어쓰기는 .env.production.local
 .env
 .env.local
 .env.*.local

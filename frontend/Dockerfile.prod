@@ -6,6 +6,8 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm ci
 
+# `frontend/.env.production` 이 빌드 컨텍스트에 있으면 Vite가 자동 로드함.
+# 아래처럼 빈 ENV 를 두면 그 값이 이미 정의된 것으로 처리되어 .env.production 이 무시되므로 넣지 않음.
 COPY . .
 RUN npm run build
 

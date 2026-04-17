@@ -84,9 +84,9 @@ function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<MiniScadaDashboardScreen />} />
+        <Route path="devices/:deviceId" element={<MiniScadaDeviceDetailScreen />} />
         <Route path="devices" element={<DevicesListPage />} />
         <Route path="alarms" element={<AlarmsPage />} />
-        <Route path="devices/:deviceId" element={<MiniScadaDeviceDetailScreen />} />
         <Route
           path="admin/devices"
           element={

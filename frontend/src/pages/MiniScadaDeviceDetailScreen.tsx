@@ -206,7 +206,8 @@ function mergeDeviceWithLive(detail: DeviceDetail, live: ScadaLiveState, deviceI
     lastSeen = patch.status.lastSeen
     stale = false
   }
-  const tags = detail.tags.map((t) => {
+  const baseTags = Array.isArray(detail.tags) ? detail.tags : []
+  const tags = baseTags.map((t) => {
     const code = t.code
     if (!code) return t
     const m = patchTags[code]
@@ -255,9 +256,14 @@ export default function MiniScadaDeviceDetailScreen() {
     enabled: Boolean(validId && deviceId && getStoredToken()),
   })
 
-  const display = useMemo(() => {
+  const display = useMemo((): DeviceDetail | null => {
     if (!detail) return null
-    return mergeDeviceWithLive(detail, live, detail.deviceId)
+    try {
+      return mergeDeviceWithLive(detail, live, detail.deviceId)
+    } catch (e) {
+      console.error('mergeDeviceWithLive', e)
+      return detail
+    }
   }, [detail, live])
 
   useEffect(() => {

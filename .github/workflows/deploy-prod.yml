@@ -1,3 +1,6 @@
+# 배포: ECR 푸시 후 EC2 SSM 으로 deploy.sh 실행.
+# 프론트 Vite 변수는 저장소의 frontend/.env.production 만 수정 (Actions Secrets 불필요).
+#
 name: deploy-prod
 
 on:
@@ -49,7 +52,6 @@ jobs:
           REPOSITORY: ${{ env.ECR_FRONTEND }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          #docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG ./frontend
           docker build -f ./frontend/Dockerfile.prod -t $REGISTRY/$REPOSITORY:$IMAGE_TAG ./frontend
           docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
 
