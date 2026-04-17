@@ -60,6 +60,12 @@ public class ModbusDevicePollService {
         master.setTimeout(Math.max(3_000, Math.max(500, device.getTimeoutMs())));
         List<TagPollSample> samples = new ArrayList<>();
         try {
+            log.info(
+                    "ModbusTCP connect attempt (scheduled poll): code={} deviceId={} host={} port={}",
+                    device.getCode(),
+                    deviceId,
+                    ip,
+                    device.getPort());
             master.connect();
             int slave = device.getSlaveId();
             for (DeviceTagEntity tag : tags) {
@@ -213,10 +219,19 @@ public class ModbusDevicePollService {
         int timeoutMs = Math.max(10_000, Math.max(500, device.getTimeoutMs()));
         logs.add(tsPrefix() + " Socket timeout (connect + reads) = " + timeoutMs + " ms");
         long t0 = System.nanoTime();
-        ModbusTCPMaster master = new ModbusTCPMaster(device.getIpAddress().trim(), device.getPort());
+        String connectHost = device.getIpAddress().trim();
+        int connectPort = device.getPort();
+        ModbusTCPMaster master = new ModbusTCPMaster(connectHost, connectPort);
         master.setTimeout(timeoutMs);
         List<ConnectionSampleTagRow> rows = new ArrayList<>();
         try {
+            log.info(
+                    "ModbusTCP connect attempt (admin connection test): host={} port={} deviceId={} code={} timeoutMs={}",
+                    connectHost,
+                    connectPort,
+                    deviceId,
+                    device.getCode(),
+                    timeoutMs);
             master.connect();
             logs.add(tsPrefix() + " Connected to " + formatTarget(device));
             logs.add(tsPrefix() + " Modbus session opened");
