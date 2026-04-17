@@ -197,6 +197,7 @@ type ModalType = 'alarms' | 'events' | null
 function mergeDeviceWithLive(detail: DeviceDetail, live: ScadaLiveState, deviceId: string): DeviceDetail {
   const patch = live.byDevice[deviceId]
   if (!patch) return detail
+  const patchTags = patch.tags ?? {}
   let status = detail.status
   let lastSeen = detail.lastSeen
   let stale = detail.stale
@@ -208,7 +209,7 @@ function mergeDeviceWithLive(detail: DeviceDetail, live: ScadaLiveState, deviceI
   const tags = detail.tags.map((t) => {
     const code = t.code
     if (!code) return t
-    const m = patch.tags[code]
+    const m = patchTags[code]
     if (!m) return t
     const raw = m.value
     let value: number | string | null = t.value
@@ -268,14 +269,15 @@ export default function MiniScadaDeviceDetailScreen() {
   useEffect(() => {
     if (!detail?.deviceId || !deviceId) return
     const patch = live.byDevice[deviceId]
-    if (!patch?.tags) return
+    const tagMap = patch?.tags
+    if (!tagMap) return
     setSeries((prev) => {
       if (prev.length === 0) return prev
       return prev.map((s) => {
         const tagMeta = detail.tags.find((t) => t.tagId === s.tagId)
         const code = tagMeta?.code
         if (!code) return s
-        const cell = patch.tags[code]
+        const cell = tagMap[code]
         if (!cell) return s
         const raw = cell.value
         const n = typeof raw === 'number' ? raw : Number(raw)
@@ -431,7 +433,8 @@ export default function MiniScadaDeviceDetailScreen() {
     )
   }
 
-  if (!detail || !display) return null
+  if (!detail) return null
+  if (!display) return null
 
   return (
     <>
