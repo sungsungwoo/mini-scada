@@ -17,6 +17,13 @@ export default defineConfig({
         target: apiProxyTarget,
         changeOrigin: true,
       },
+      // MQTT WebSocket — 브라우저는 dev 서버 Origin 으로 `/mqtt` 접속, 여기서 Mosquitto :9001 로 전달
+      '/mqtt': {
+        target: 'http://127.0.0.1:9001',
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/mqtt/, '') || '/',
+      },
     },
   },
 })

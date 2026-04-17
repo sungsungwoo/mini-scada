@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { apiGet, getStoredToken } from '../lib/api'
 import { ApiError } from '../lib/api'
+import { getMqttWebSocketUrl } from '../lib/mqttWsUrl'
 import { useScadaMqtt, type ScadaLiveState } from '../hooks/useScadaMqtt'
 import { useAuth } from '../auth/AuthContext'
 import {
@@ -247,7 +248,7 @@ export default function MiniScadaDeviceDetailScreen() {
 
   const validId = deviceId && UUID_RE.test(deviceId)
 
-  const mqttWs = import.meta.env.VITE_MQTT_WS_URL as string | undefined
+  const mqttWs = getMqttWebSocketUrl()
   const { live, connected, error: mqttError } = useScadaMqtt({
     wsUrl: mqttWs,
     enabled: Boolean(validId && deviceId && getStoredToken()),
