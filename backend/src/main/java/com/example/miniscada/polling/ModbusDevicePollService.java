@@ -44,7 +44,8 @@ public class ModbusDevicePollService {
         if (!"MODBUS_TCP".equalsIgnoreCase(device.getProtocolType())) {
             return;
         }
-        if (device.getIpAddress() == null || device.getPort() == null || device.getSlaveId() == null) {
+        String ip = device.getIpAddress() == null ? null : device.getIpAddress().trim();
+        if (ip == null || ip.isBlank() || device.getPort() == null || device.getSlaveId() == null) {
             return;
         }
 
@@ -54,8 +55,9 @@ public class ModbusDevicePollService {
         Instant pollStarted = Instant.now();
         long startNs = System.nanoTime();
 
-        ModbusTCPMaster master = new ModbusTCPMaster(device.getIpAddress(), device.getPort());
-        master.setTimeout(Math.max(500, device.getTimeoutMs()));
+        ModbusTCPMaster master = new ModbusTCPMaster(ip, device.getPort());
+        // 스케줄 폴링도 동일 j2mod 타임아웃; Docker→호스트 Modbus 시 너무 짧으면 Connect timed out
+        master.setTimeout(Math.max(3_000, Math.max(500, device.getTimeoutMs())));
         List<TagPollSample> samples = new ArrayList<>();
         try {
             master.connect();
@@ -199,7 +201,17 @@ public class ModbusDevicePollService {
                     false, false, null, msg, 0, enabledCount(tags));
         }
 
-        int timeoutMs = Math.max(500, device.getTimeoutMs());
+        log.info(
+                "Admin connection test: deviceId={} code={} target={} slaveId={} tagCount={}",
+                deviceId,
+                device.getCode(),
+                formatTarget(device),
+                device.getSlaveId(),
+                tags.size());
+
+        // j2mod: 이 값이 TCP connect·읽기 SO 타임아웃 모두에 사용됨. Docker→호스트(동일 EC2 172.31.x) 헤어핀은 2s 부족한 경우가 있어 최소 10s.
+        int timeoutMs = Math.max(10_000, Math.max(500, device.getTimeoutMs()));
+        logs.add(tsPrefix() + " Socket timeout (connect + reads) = " + timeoutMs + " ms");
         long t0 = System.nanoTime();
         ModbusTCPMaster master = new ModbusTCPMaster(device.getIpAddress().trim(), device.getPort());
         master.setTimeout(timeoutMs);
@@ -248,7 +260,16 @@ public class ModbusDevicePollService {
             return detailShell(device, groupName, rows, logs, success, true, totalMs, message, enabledOk, enabledTotal);
         } catch (Exception e) {
             String err = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            log.warn(
+                    "Admin connection test connect failed: deviceId={} target={} — {}",
+                    deviceId,
+                    formatTarget(device),
+                    err);
             logs.add(tsPrefix() + " Connect failed: " + err);
+            if (err.toLowerCase().contains("timed out")) {
+                logs.add(tsPrefix()
+                        + " Hint: backend in Docker → same-host Modbus often works better with IP host.docker.internal (see compose extra_hosts) or 172.17.0.1.");
+            }
             List<ConnectionSampleTagRow> failRows = new ArrayList<>();
             for (DeviceTagEntity tag : tags) {
                 if (!tag.isEnabled()) {
@@ -274,7 +295,8 @@ public class ModbusDevicePollService {
     }
 
     private static boolean connectionParamsIncomplete(DeviceEntity d) {
-        return d.getIpAddress() == null || d.getIpAddress().isBlank()
+        String ip = d.getIpAddress() == null ? null : d.getIpAddress().trim();
+        return ip == null || ip.isBlank()
                 || d.getPort() == null || d.getPort() <= 0
                 || d.getSlaveId() == null;
     }
