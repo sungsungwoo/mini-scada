@@ -11,6 +11,7 @@
 * MQTT는 이벤트 전달 계층이고, **DB가 단일 진실 공급원(Source of Truth)**
 * 실제 장비 제어(write)는 MVP 범위 밖이므로, 우선은 **수집/상태/알람/이력** 중심으로 설계
 * 로그인 식별자는 REST API(`POST /api/v1/auth/login`)의 **`username`** 과 대응하는 `users.username` 을 사용한다(이메일은 선택·연락용으로 둘 수 있음).
+* **리프레시 세션**은 `auth_sessions`에 저장되며, Access JWT 클레임 `sid`와 연결된다(유휴·절대 만료·리프레시 로테이션은 백엔드 DA 문서 참고).
 
 ---
 
@@ -51,6 +52,22 @@
 **권장 제약**
 
 * `UNIQUE(name)`
+
+---
+
+### `auth_sessions`
+
+로그인·회원가입 시 생성되는 **리프레시 토큰 세션**(Access JWT `sid`와 대응). Refresh 토큰 원문은 DB에 저장하지 않고 SHA-256 해시만 보관한다.
+
+| 컬럼명 | 데이터 타입 | 설명 |
+| :-- | :-- | :-- |
+| `id` | UUID | PK — JWT `sid` |
+| `user_id` | UUID | FK → `users.id` |
+| `refresh_token_hash` | VARCHAR(64) | 리프레시 토큰 해시(hex) |
+| `created_at` | TIMESTAMPTZ | 행 생성 시각 |
+| `last_activity_at` | TIMESTAMPTZ | 마지막 인증 API 활동(슬라이딩) |
+| `absolute_expires_at` | TIMESTAMPTZ | 최초 로그인 기준 절대 만료 |
+| `refresh_expires_at` | TIMESTAMPTZ | 리프레시 자격 만료(로테이션 시 연장) |
 
 ---
 

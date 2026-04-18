@@ -18,6 +18,7 @@ import {
   parseJwtExpiresAtMs,
   SESSION_EXPIRED_EVENT,
   setAuthSession,
+  tryRefreshAccessToken,
   type StoredUser,
 } from '../lib/api'
 
@@ -68,20 +69,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const t = getStoredToken()
-    const u = getStoredUser()
-    if (t && u) {
-      const expMs = parseJwtExpiresAtMs(t)
-      if (expMs != null && expMs <= Date.now()) {
-        clearAuth()
-        setSessionExpiredOpen(true)
-        setReady(true)
-        return
+    void (async () => {
+      let t = getStoredToken()
+      let u = getStoredUser()
+      if (t && u) {
+        const expMs = parseJwtExpiresAtMs(t)
+        if (expMs != null && expMs <= Date.now()) {
+          const ok = await tryRefreshAccessToken()
+          if (ok) {
+            t = getStoredToken()
+            u = getStoredUser()
+          } else {
+            clearAuth()
+            setSessionExpiredOpen(true)
+            setReady(true)
+            return
+          }
+        }
+        if (t && u) {
+          setToken(t)
+          setUser(u)
+        }
+      } else {
+        const ok = await tryRefreshAccessToken()
+        if (ok) {
+          setToken(getStoredToken())
+          setUser(getStoredUser())
+        }
       }
-      setToken(t)
-      setUser(u)
-    }
-    setReady(true)
+      setReady(true)
+    })()
   }, [])
 
   /** JWT 만료 시각에 맞춰 백그라운드에서 만료 처리 (탭이 열린 채로 만료되는 경우). */

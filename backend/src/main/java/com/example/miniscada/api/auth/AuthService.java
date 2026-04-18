@@ -34,9 +34,10 @@ public class AuthService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthSessionService authSessionService;
 
-    @Transactional(readOnly = true)
-    public LoginResponse login(LoginRequest req) {
+    @Transactional
+    public LoginWithRefresh login(LoginRequest req) {
         AppUser user = userRepository.findByUsername(req.username())
                 .orElseThrow(() -> new BusinessException(
                         ErrorCode.INVALID_CREDENTIALS,
@@ -57,15 +58,21 @@ public class AuthService {
                 .map(RoleEntity::getName)
                 .sorted()
                 .toList();
-        String token = jwtTokenProvider.createToken(user.getId(), user.getUsername(), roleNames);
-        return new LoginResponse(toUserDto(user), token);
+        AuthSessionService.CreatedSession session = authSessionService.createSession(user.getId());
+        String token = jwtTokenProvider.createToken(
+                user.getId(), user.getUsername(), roleNames, session.sessionId());
+        return new LoginWithRefresh(
+                new LoginResponse(toUserDto(user), token),
+                session.plainRefreshToken(),
+                session.refreshExpiresAt()
+        );
     }
 
     /**
      * Self-service registration: always assigns {@code OPERATOR} only (never ADMIN).
      */
     @Transactional
-    public LoginResponse register(RegisterRequest req) {
+    public LoginWithRefresh register(RegisterRequest req) {
         String username = req.username().trim();
         if (userRepository.existsByUsername(username)) {
             throw new BusinessException(ErrorCode.USERNAME_TAKEN, "Username already taken", HttpStatus.CONFLICT);
@@ -99,8 +106,44 @@ public class AuthService {
         userRepository.save(user);
 
         List<String> roleNames = List.of("OPERATOR");
-        String token = jwtTokenProvider.createToken(user.getId(), user.getUsername(), roleNames);
-        return new LoginResponse(toUserDto(user), token);
+        AuthSessionService.CreatedSession session = authSessionService.createSession(user.getId());
+        String token = jwtTokenProvider.createToken(
+                user.getId(), user.getUsername(), roleNames, session.sessionId());
+        return new LoginWithRefresh(
+                new LoginResponse(toUserDto(user), token),
+                session.plainRefreshToken(),
+                session.refreshExpiresAt()
+        );
+    }
+
+    @Transactional
+    public LoginWithRefresh refresh(String rawRefreshToken) {
+        AuthSessionService.RefreshedSession r = authSessionService.refresh(rawRefreshToken);
+        AppUser user = userRepository.findById(r.userId())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        "User not found",
+                        HttpStatus.NOT_FOUND
+                ));
+        if (!user.isActive()) {
+            throw new BusinessException(ErrorCode.USER_INACTIVE, "User inactive", HttpStatus.FORBIDDEN);
+        }
+        List<String> roleNames = user.getRoles().stream()
+                .map(RoleEntity::getName)
+                .sorted()
+                .toList();
+        String access = jwtTokenProvider.createToken(
+                user.getId(), user.getUsername(), roleNames, r.sessionId());
+        return new LoginWithRefresh(
+                new LoginResponse(toUserDto(user), access),
+                r.plainRefreshToken(),
+                r.refreshExpiresAt()
+        );
+    }
+
+    @Transactional
+    public void revokeSession(UUID sessionId) {
+        authSessionService.revokeById(sessionId);
     }
 
     private static UserDto toUserDto(AppUser user) {

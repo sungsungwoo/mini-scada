@@ -80,9 +80,65 @@ function apiUrl(path: string): string {
   return origin ? `${origin}${p}` : p
 }
 
-export async function apiFetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+function pathnameOnly(path: string): string {
+  return path.startsWith('http') ? new URL(path).pathname : path
+}
+
+function shouldAttemptRefreshOn401(path: string): boolean {
+  const p = pathnameOnly(path)
+  if (p.endsWith('/auth/refresh')) return false
+  if (p.endsWith('/auth/login') || p.endsWith('/auth/register')) return false
+  return true
+}
+
+let refreshPromise: Promise<boolean> | null = null
+
+async function runRefreshAccessToken(): Promise<boolean> {
+  try {
+    const res = await fetch(apiUrl('/api/v1/auth/refresh'), {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const raw = await res.text()
+    if (!res.ok) return false
+    let json: Record<string, unknown> | null = null
+    if (raw.trim()) {
+      try {
+        json = JSON.parse(raw) as Record<string, unknown>
+      } catch {
+        return false
+      }
+    }
+    if (!json || json.success !== true) return false
+    const data = json.data as { accessToken?: string; user?: StoredUser }
+    if (!data?.accessToken || !data?.user) return false
+    const remember = !!localStorage.getItem(TOKEN_KEY)
+    setAuthSession(data.accessToken, data.user, remember)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Uses httpOnly refresh cookie. Returns true if a new access token was stored.
+ */
+export async function tryRefreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = runRefreshAccessToken().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
+async function fetchWithRefreshRetry(
+  path: string,
+  init: RequestInit | undefined,
+  retryAfterRefresh: boolean,
+): Promise<Response> {
   const token = getStoredToken()
-  const hadToken = !!token
   const headers = new Headers(init?.headers)
   if (!headers.has('Content-Type') && init?.body != null) {
     headers.set('Content-Type', 'application/json')
@@ -91,7 +147,23 @@ export async function apiFetchJson<T>(path: string, init?: RequestInit): Promise
     headers.set('Authorization', `Bearer ${token}`)
   }
 
-  const res = await fetch(apiUrl(path), { ...init, headers })
+  const res = await fetch(apiUrl(path), { ...init, headers, credentials: 'include' })
+
+  if (
+    res.status === 401 &&
+    !retryAfterRefresh &&
+    shouldAttemptRefreshOn401(path) &&
+    (await tryRefreshAccessToken())
+  ) {
+    return fetchWithRefreshRetry(path, init, true)
+  }
+
+  return res
+}
+
+export async function apiFetchJson<T>(path: string, init?: RequestInit): Promise<T> {
+  const hadToken = !!getStoredToken()
+  const res = await fetchWithRefreshRetry(path, init, false)
 
   const raw = await res.text()
   let json: Record<string, unknown> | null = null
@@ -150,13 +222,8 @@ export async function apiPatch<T>(path: string, body?: unknown): Promise<T> {
 
 /** DELETE with empty or JSON error body (204 No Content = success). */
 export async function apiDelete(path: string): Promise<void> {
-  const token = getStoredToken()
-  const hadToken = !!token
-  const headers = new Headers()
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-  }
-  const res = await fetch(apiUrl(path), { method: 'DELETE', headers })
+  const hadToken = !!getStoredToken()
+  const res = await fetchWithRefreshRetry(path, { method: 'DELETE' }, false)
   const raw = await res.text()
 
   if (res.status === 401) {

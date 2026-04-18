@@ -27,7 +27,12 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(bytes);
     }
 
-    public String createToken(UUID userId, String username, java.util.Collection<String> roles) {
+    public String createToken(
+            UUID userId,
+            String username,
+            java.util.Collection<String> roles,
+            UUID sessionId
+    ) {
         Date now = new Date();
         Date exp = new Date(now.getTime() + props.getExpirationMs());
         String rolesCsv = roles.stream().sorted().collect(Collectors.joining(","));
@@ -35,6 +40,7 @@ public class JwtTokenProvider {
                 .subject(userId.toString())
                 .claim("username", username)
                 .claim("roles", rolesCsv)
+                .claim("sid", sessionId.toString())
                 .issuedAt(now)
                 .expiration(exp)
                 .signWith(key)

@@ -14,5 +14,5 @@ public class JwtProperties {
      */
     private String secret = "change-me";
 
-    private long expirationMs = 86400000L;
+    private long expirationMs = 3600000L;
 }

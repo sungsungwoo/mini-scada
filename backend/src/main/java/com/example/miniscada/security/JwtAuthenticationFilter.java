@@ -1,5 +1,6 @@
 package com.example.miniscada.security;
 
+import com.example.miniscada.api.auth.AuthSessionService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,9 +24,11 @@ import java.util.UUID;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final AuthSessionService authSessionService;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider, AuthSessionService authSessionService) {
         this.jwtTokenProvider = jwtTokenProvider;
+        this.authSessionService = authSessionService;
     }
 
     @Override
@@ -40,14 +43,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 Claims claims = jwtTokenProvider.parse(token);
                 UUID userId = UUID.fromString(claims.getSubject());
-                String rolesCsv = claims.get("roles", String.class);
-                List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesCsv.split(","))
-                        .filter(s -> !s.isBlank())
-                        .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                        .toList();
-                var auth = new UsernamePasswordAuthenticationToken(userId.toString(), null, authorities);
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                String sidStr = claims.get("sid", String.class);
+                if (sidStr == null || sidStr.isBlank()) {
+                    SecurityContextHolder.clearContext();
+                } else {
+                    UUID sessionId = UUID.fromString(sidStr);
+                    authSessionService.validateAndTouch(sessionId, userId);
+                    String rolesCsv = claims.get("roles", String.class);
+                    List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesCsv.split(","))
+                            .filter(s -> !s.isBlank())
+                            .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                            .toList();
+                    var auth = new UsernamePasswordAuthenticationToken(userId.toString(), null, authorities);
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             } catch (Exception ignored) {
                 SecurityContextHolder.clearContext();
             }

@@ -2,6 +2,8 @@ package com.example.miniscada.common.exception;
 
 public enum ErrorCode {
     UNAUTHORIZED,
+    SESSION_EXPIRED,
+    REFRESH_TOKEN_INVALID,
     FORBIDDEN,
     INVALID_CREDENTIALS,
     USER_INACTIVE,

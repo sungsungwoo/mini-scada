@@ -295,3 +295,40 @@ Mini SCADA는 백엔드만 띄운다고 동작하는 구조가 아니라,
 다만 문서상 목표 구조는 위처럼 잡아두는 편이, 기능이 늘어나도 무너지지 않는다.
 
 ---
+
+## 인증 · 리프레시 세션 (Access / Refresh / 슬라이딩)
+
+### 정책 요약
+
+| 항목 | 기본값 | 설명 |
+|------|--------|------|
+| Access token (JWT) | 1시간 | `Authorization: Bearer`. 클레임 `sid`로 서버 세션 행과 연결. |
+| Refresh token | HttpOnly 쿠키 `mini_scada_refresh` | DB에는 SHA-256 해시만 저장. 성공 시 로테이션되며 `refresh_expires_at`이 연장됨. |
+| 유휴 (idle) | 1시간 | `last_activity_at` 기준. 이 시간을 넘기면 `POST /api/v1/auth/refresh`가 거부된다. |
+| 절대 만료 | 로그인(또는 회원가입) 시점 + 24시간 | `absolute_expires_at`은 갱신되지 않음. |
+| 활동 반영 | 인증된 API 요청마다 | JWT 검증 후 `auth_sessions.last_activity_at` 갱신. |
+
+### 저장소
+
+- 테이블 `auth_sessions` (Flyway `V11__auth_sessions.sql`): `user_id`, `refresh_token_hash`, `last_activity_at`, `absolute_expires_at`, `refresh_expires_at`.
+
+### 엔드포인트
+
+- `POST /api/v1/auth/login`, `/register`: 응답 본문에 `accessToken`, `Set-Cookie`에 refresh.
+- `POST /api/v1/auth/refresh`: 쿠키만으로 새 access + refresh 로테이션 (본문 동일 형식).
+- `POST /api/v1/auth/logout`: 선택적으로 `Authorization`으로 세션 행 삭제 + 쿠키 무효화.
+
+### 설정 키 (`application.yml`)
+
+- `app.jwt.expiration-ms`: 액세스 JWT TTL.
+- `app.auth-session.idle-timeout-ms`, `absolute-max-ms`, `refresh-expiration-ms`.
+- `app.auth-cookie.secure`, `app.auth-cookie.same-site`: 프로덕션 HTTPS·크로스 사이트 시 `secure: true`, 필요 시 `SameSite=None`.
+
+### 프론트엔드
+
+- 모든 API `fetch`에 `credentials: 'include'` (쿠키 전송).
+- 401 시 `/auth/login`·`/register` 제외하고 `POST /auth/refresh` 한 번 재시도 후 원 요청 재실행.
+
+통합 테스트(`MiniScadaApiIntegrationTest`)는 Testcontainers(PostgreSQL/Timescale)가 있을 때만 실행되며, 로그인 → 리프레시 → 유휴 시 리프레시 거부 시나리오를 포함한다.
+
+---

@@ -1,6 +1,7 @@
 package com.example.miniscada;
 
 import com.example.miniscada.api.auth.dto.LoginRequest;
+import com.example.miniscada.api.auth.AuthSessionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWeb
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -108,5 +110,54 @@ class MiniScadaApiIntegrationTest {
                 .expectStatus().isOk()
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true);
+    }
+
+    @Test
+    void refreshReturnsNewAccessTokenAndIdleBlocksRefresh() throws Exception {
+        var loginResult = webClient.post()
+                .uri("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(new LoginRequest("admin", "admin1234!!"))
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .returnResult();
+
+        ResponseCookie refresh = loginResult.getResponseCookies().getFirst(AuthSessionService.REFRESH_COOKIE_NAME);
+        assertThat(refresh).isNotNull();
+        assertThat(refresh.isHttpOnly()).isTrue();
+
+        String loginJson = loginResult.getResponseBody();
+        JsonNode loginRoot = objectMapper.readTree(loginJson);
+        String access1 = loginRoot.path("data").path("accessToken").asText();
+        assertThat(access1).isNotBlank();
+
+        var refreshResult = webClient.post()
+                .uri("/api/v1/auth/refresh")
+                .cookie(refresh.getName(), refresh.getValue())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .returnResult();
+
+        JsonNode refreshRoot = objectMapper.readTree(refreshResult.getResponseBody());
+        String access2 = refreshRoot.path("data").path("accessToken").asText();
+        assertThat(access2).isNotBlank();
+        assertThat(access2).isNotEqualTo(access1);
+
+        ResponseCookie refreshRotated = refreshResult.getResponseCookies().getFirst(AuthSessionService.REFRESH_COOKIE_NAME);
+        assertThat(refreshRotated).isNotNull();
+
+        jdbcTemplate.update(
+                "update auth_sessions set last_activity_at = now() - interval '2 hours' "
+                        + "where user_id = (select id from users where username = ?)",
+                "admin"
+        );
+
+        webClient.post()
+                .uri("/api/v1/auth/refresh")
+                .cookie(refreshRotated.getName(), refreshRotated.getValue())
+                .exchange()
+                .expectStatus().isUnauthorized();
     }
 }
