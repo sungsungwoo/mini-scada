@@ -21,19 +21,6 @@ type AlarmListData = {
   pageInfo: { page: number; size: number; totalElements: number; totalPages: number }
 }
 
-/** 백엔드 `OpenAlarmCount` — Jackson 설정에 따라 키가 달라질 수 있어 둘 다 허용 */
-function readOpenAlarmCount(payload: unknown): number | null {
-  if (!payload || typeof payload !== 'object') return null
-  const o = payload as Record<string, unknown>
-  const raw = o.count ?? o.openAlarmCount
-  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
-  if (typeof raw === 'string' && raw.trim() !== '') {
-    const n = Number(raw)
-    return Number.isFinite(n) ? n : null
-  }
-  return null
-}
-
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return '—'
   const d = new Date(iso)
@@ -82,7 +69,6 @@ export default function AlarmsPage() {
   const [query, setQuery] = useState('')
   const [severityFilter, setSeverityFilter] = useState('')
   const [ackFilter, setAckFilter] = useState<'all' | 'open' | 'acked'>('all')
-  const [openAlarmTotal, setOpenAlarmTotal] = useState<number | null>(null)
   const [freshTick, setFreshTick] = useState(0)
   const [modalAlarmId, setModalAlarmId] = useState<string | null>(null)
 
@@ -107,16 +93,11 @@ export default function AlarmsPage() {
       if (ackFilter === 'open') params.set('acknowledged', 'false')
       if (ackFilter === 'acked') params.set('acknowledged', 'true')
 
-      const [listRes, countPayload] = await Promise.all([
-        apiGet<AlarmListData>(`/api/v1/alarms?${params}`),
-        apiGet<unknown>('/api/v1/alarms/counts/open'),
-      ])
+      const listRes = await apiGet<AlarmListData>(`/api/v1/alarms?${params}`)
       setData(listRes)
-      setOpenAlarmTotal(readOpenAlarmCount(countPayload))
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to load')
       setData(null)
-      setOpenAlarmTotal(null)
     } finally {
       setLoading(false)
     }
@@ -157,9 +138,11 @@ export default function AlarmsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-semibold text-slate-50">Alarms</h1>
             <span
-              className={`inline-flex min-w-[88px] items-center justify-center border px-2 py-1 text-xs leading-none ${ackBadgeTone(false)}`}
+              className={`inline-flex min-w-[88px] items-center justify-center border px-2 py-1 text-xs leading-none ${
+                totalFiltered > 0 ? 'border-slate-600 bg-slate-800/80 text-slate-200' : 'border-slate-600 bg-slate-800/80 text-slate-400'
+              }`}
             >
-              {openAlarmTotal != null ? `${openAlarmTotal} Unacked` : '— Unacked'}
+              {data == null && loading ? '—' : `${totalFiltered.toLocaleString()} total`}
             </span>
           </div>
           <p className="mt-1 text-sm text-slate-400">
