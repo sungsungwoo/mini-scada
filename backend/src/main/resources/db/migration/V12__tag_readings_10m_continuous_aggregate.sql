@@ -1,6 +1,7 @@
 -- 10분 단위 연속 집계(기본 downsampling_interval '10m' 과 정합). Raw(`tag_readings`)보다 긴 보존은 aggregate_retention_days 로 관리.
 -- TimescaleDB 전제(로컬/배포 동일).
 
+-- Flyway는 마이그레이션을 트랜잭션으로 실행함. Timescale 연속 집계는 WITH DATA일 때 트랜잭션 불가 → WITH NO DATA 로 스키마만 생성.
 CREATE MATERIALIZED VIEW tag_readings_10m
 WITH (timescaledb.continuous) AS
 SELECT
@@ -12,7 +13,8 @@ SELECT
     max(tr.value_numeric) AS value_max,
     count(*)::bigint AS sample_count
 FROM tag_readings tr
-GROUP BY 1, 2, 3;
+GROUP BY 1, 2, 3
+WITH NO DATA;
 
 -- 백그라운드로 raw 에서 집계 갱신 (간격은 시드 기본 정책과 맞춤)
 SELECT add_continuous_aggregate_policy(
