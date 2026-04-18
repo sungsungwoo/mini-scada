@@ -16,3 +16,11 @@ export const ALARMS_LIST_PAGE_SIZE = (() => {
   if (!Number.isFinite(n) || n < 1) return 10
   return Math.min(200, Math.floor(n))
 })()
+
+/** 대시보드 자동 새로고침 주기(초). `VITE_DASHBOARD_REFRESH_INTERVAL_SEC` — 없거나 잘못되면 10. */
+export const DASHBOARD_REFRESH_INTERVAL_SEC = (() => {
+  const raw = import.meta.env.VITE_DASHBOARD_REFRESH_INTERVAL_SEC
+  const n = typeof raw === 'string' ? Number(raw.trim()) : Number(raw)
+  if (!Number.isFinite(n) || n < 1) return 10
+  return Math.min(3600, Math.floor(n))
+})()

@@ -54,6 +54,11 @@ public class AlarmService {
     private final AppUserRepository appUserRepository;
 
     @Transactional(readOnly = true)
+    public long countOpenAlarms() {
+        return alarmRepository.countByStatus("OPEN");
+    }
+
+    @Transactional(readOnly = true)
     public AlarmListData list(
             String severity,
             Boolean acknowledged,

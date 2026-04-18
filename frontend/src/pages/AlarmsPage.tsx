@@ -21,6 +21,19 @@ type AlarmListData = {
   pageInfo: { page: number; size: number; totalElements: number; totalPages: number }
 }
 
+/** 백엔드 `OpenAlarmCount` — Jackson 설정에 따라 키가 달라질 수 있어 둘 다 허용 */
+function readOpenAlarmCount(payload: unknown): number | null {
+  if (!payload || typeof payload !== 'object') return null
+  const o = payload as Record<string, unknown>
+  const raw = o.count ?? o.openAlarmCount
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw
+  if (typeof raw === 'string' && raw.trim() !== '') {
+    const n = Number(raw)
+    return Number.isFinite(n) ? n : null
+  }
+  return null
+}
+
 function formatWhen(iso: string | null | undefined): string {
   if (!iso) return '—'
   const d = new Date(iso)
@@ -94,12 +107,12 @@ export default function AlarmsPage() {
       if (ackFilter === 'open') params.set('acknowledged', 'false')
       if (ackFilter === 'acked') params.set('acknowledged', 'true')
 
-      const [listRes, openRes] = await Promise.all([
+      const [listRes, countPayload] = await Promise.all([
         apiGet<AlarmListData>(`/api/v1/alarms?${params}`),
-        apiGet<AlarmListData>('/api/v1/alarms?acknowledged=false&page=1&size=1'),
+        apiGet<unknown>('/api/v1/alarms/counts/open'),
       ])
       setData(listRes)
-      setOpenAlarmTotal(openRes.pageInfo.totalElements)
+      setOpenAlarmTotal(readOpenAlarmCount(countPayload))
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Failed to load')
       setData(null)

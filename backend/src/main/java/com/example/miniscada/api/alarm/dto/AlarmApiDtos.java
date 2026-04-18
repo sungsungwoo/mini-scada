@@ -11,6 +11,10 @@ public final class AlarmApiDtos {
     public record PageInfo(int page, int size, long totalElements, int totalPages) {
     }
 
+    /** 미인지(OPEN) 알람 건수 — 대시보드 `openAlarmCount` 와 동일 소스. */
+    public record OpenAlarmCount(long count) {
+    }
+
     public record AlarmSummary(
             String alarmId,
             String deviceId,

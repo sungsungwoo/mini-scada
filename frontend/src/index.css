@@ -8,3 +8,42 @@ body {
   min-height: 100svh;
   width: 100%;
 }
+
+/*
+ * 클릭 피드백: 대부분의 화면이 `button` 또는 테두리 있는 `Link`(a.border) 를 사용.
+ * 텍스트 링크(underline만)는 보통 `border` 클래스가 없어 제외됨.
+ */
+@layer components {
+  button:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='button']:not(:disabled),
+  a.border[href]:not([aria-disabled='true']) {
+    transition:
+      transform 0.1s ease-out,
+      filter 0.12s ease-out,
+      opacity 0.12s ease-out;
+    touch-action: manipulation;
+  }
+
+  button:not(:disabled):active,
+  input[type='submit']:not(:disabled):active,
+  input[type='button']:not(:disabled):active,
+  a.border[href]:active {
+    transform: scale(0.985);
+    filter: brightness(0.9);
+  }
+
+  button:focus-visible,
+  input[type='submit']:focus-visible,
+  input[type='button']:focus-visible,
+  a.border[href]:focus-visible {
+    outline: 2px solid rgb(159 208 196 / 0.55);
+    outline-offset: 2px;
+  }
+
+  button:disabled,
+  input[type='submit']:disabled,
+  input[type='button']:disabled {
+    cursor: not-allowed;
+  }
+}

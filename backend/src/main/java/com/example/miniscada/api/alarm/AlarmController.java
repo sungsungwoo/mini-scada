@@ -3,6 +3,7 @@ package com.example.miniscada.api.alarm;
 import com.example.miniscada.api.alarm.dto.AlarmApiDtos.AckResponse;
 import com.example.miniscada.api.alarm.dto.AlarmApiDtos.AlarmDetail;
 import com.example.miniscada.api.alarm.dto.AlarmApiDtos.AlarmListData;
+import com.example.miniscada.api.alarm.dto.AlarmApiDtos.OpenAlarmCount;
 import com.example.miniscada.api.alarm.dto.AlarmApiDtos.BulkAckData;
 import com.example.miniscada.api.alarm.dto.AlarmApiDtos.BulkAckRequest;
 import com.example.miniscada.common.dto.ApiResponse;
@@ -27,6 +28,12 @@ import java.util.UUID;
 public class AlarmController {
 
     private final AlarmService alarmService;
+
+    /** 미인지 건수 전용 — `/{alarmId}` 와 단일 세그먼트 충돌을 피함. */
+    @GetMapping("/counts/open")
+    public ApiResponse<OpenAlarmCount> openCount() {
+        return ApiResponse.ok(new OpenAlarmCount(alarmService.countOpenAlarms()));
+    }
 
     @GetMapping
     public ApiResponse<AlarmListData> list(

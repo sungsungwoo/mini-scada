@@ -23,6 +23,7 @@ import {
   pollingTone,
   StatusPill,
 } from '../components/scada/ScadaUi'
+import { DASHBOARD_REFRESH_INTERVAL_SEC } from '../config/app'
 
 type PrimaryTag = { tagName: string; value: number | null; unit: string | null }
 
@@ -116,6 +117,11 @@ export default function MiniScadaDashboardScreen() {
 
   useEffect(() => {
     void refresh()
+    const ms = DASHBOARD_REFRESH_INTERVAL_SEC * 1000
+    const id = window.setInterval(() => {
+      void refresh()
+    }, ms)
+    return () => window.clearInterval(id)
   }, [refresh])
 
   const onAck = async (alarmId: string) => {
