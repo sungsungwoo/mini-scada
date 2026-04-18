@@ -64,3 +64,8 @@ app:
   polling:
     scheduler-ms: 1000
     initial-delay-ms: 15000
+  retention:
+    # TimescaleDB drop_chunks — raw: tag_readings, aggregate: tag_readings_10m (V12 CA, 10m bucket)
+    enabled: ${APP_RETENTION_ENABLED:true}
+    cron: ${APP_RETENTION_CRON:0 0 3 * * *}
+    zone: ${APP_RETENTION_ZONE:UTC}

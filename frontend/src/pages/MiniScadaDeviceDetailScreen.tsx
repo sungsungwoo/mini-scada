@@ -791,40 +791,63 @@ function TrendCharts({ series }: { series: TimeseriesSeries[] }) {
   )
 }
 
+/** Parse ISO timestamp; invalid → NaN */
+function timeMs(iso: string | undefined): number {
+  if (!iso) return NaN
+  const t = Date.parse(iso)
+  return Number.isNaN(t) ? NaN : t
+}
+
+/** X in [12, w-12] from time span (not sample index) so refresh vs MQTT share the same scale. */
+function xFromTime(t: number, tMin: number, tMax: number, w: number): number {
+  const inner = w - 24
+  if (tMax <= tMin) return w / 2
+  return 12 + ((t - tMin) / (tMax - tMin)) * inner
+}
+
 function Spark({ series }: { series: TimeseriesSeries }) {
   const w = 360
   const h = 120
   const { path, stroke, dots } = useMemo(() => {
-    const pts = series.points ?? []
-    const vals = pts.map((p) => num(p.value)).filter((v): v is number => v != null)
-    if (vals.length === 0) {
+    const raw = series.points ?? []
+    type Tp = { t: number; v: number }
+    const withTime: Tp[] = []
+    for (const p of raw) {
+      const v = num(p.value)
+      if (v == null) continue
+      const t = timeMs(p.timestamp)
+      if (Number.isNaN(t)) continue
+      withTime.push({ t, v })
+    }
+    withTime.sort((a, b) => a.t - b.t)
+
+    if (withTime.length === 0) {
       return { path: '', stroke: '#64748b', dots: [] as { cx: number; cy: number }[] }
     }
+
+    const vals = withTime.map((p) => p.v)
     const minV = Math.min(...vals)
     const maxV = Math.max(...vals)
     const pad = maxV === minV ? Math.abs(minV) * 0.05 || 1 : (maxV - minV) * 0.08
     const y0 = minV - pad
     const span = maxV - minV + 2 * pad || 1
-    const last = pts.length - 1
+
+    const tMin = withTime[0].t
+    const tMax = withTime[withTime.length - 1].t
+
     const segs: string[] = []
     let first = true
-    for (let i = 0; i < pts.length; i++) {
-      const v = num(pts[i].value)
-      if (v == null) continue
-      const x = last <= 0 ? w / 2 : (i / last) * (w - 24) + 12
-      const y = h - 12 - ((v - y0) / span) * (h - 24)
+    for (const p of withTime) {
+      const x = xFromTime(p.t, tMin, tMax, w)
+      const y = h - 12 - ((p.v - y0) / span) * (h - 24)
       segs.push(`${first ? 'M' : 'L'} ${x} ${y}`)
       first = false
     }
-    const ds = pts
-      .map((p, i) => {
-        const v = num(p.value)
-        if (v == null) return null
-        const x = last <= 0 ? w / 2 : (i / last) * (w - 24) + 12
-        const y = h - 12 - ((v - y0) / span) * (h - 24)
-        return { cx: x, cy: y }
-      })
-      .filter((x): x is { cx: number; cy: number } => x != null)
+    const ds = withTime.map((p) => {
+      const x = xFromTime(p.t, tMin, tMax, w)
+      const y = h - 12 - ((p.v - y0) / span) * (h - 24)
+      return { cx: x, cy: y }
+    })
     return { path: segs.join(' '), stroke: '#9fd0c4', dots: ds }
   }, [series.points])
 
