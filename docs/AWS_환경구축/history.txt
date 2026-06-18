@@ -1,0 +1,380 @@
+    1  df
+    2  top -d
+    3  top -d 1
+    4  aws
+    5  sudo apt  install awscli 
+    6  snap info aws-cli
+    7  aws
+    8  cd /opt/mini-scada/
+    9  ll
+   10  docker ps
+   11  docker restart mini_scada_mqtt
+   12  docker ps
+   13  docker restart mini_scada_mqtt
+   14  docker ps
+   15  netstat -plnt
+   16  docker exec mini_scada_mqtt cat /mosquitto/config/mosquitto.conf
+   17  ll
+   18  cat docker-compose.prod.yml
+   19  vi docker-compose.prod.yml 
+   20  docker compose up -d mosquitto
+   21  docker exec mini_scada_mqtt cat /mosquitto/config/mosquitto.conf
+   22  docker compose up -d mosquitto
+   23  docker compose up -f docker-compose.prod.yml -d mosquitto
+   24  docker exec mini_scada_mqtt cat /mosquitto/config/mosquitto.conf
+   25  docker compose up -d mosquitto
+   26  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d mosquitto
+   27  mkdir -p /opt/mini-scada/infra/mosquitto
+   28  vi /opt/mini-scada/infra/mosquitto/mosquitto.conf
+   29  vi a
+   30  cd infra/mosquitto/
+   31  vi mosquitto.conf
+   32  ll
+   33  rm -rf mosquitto.conf/
+   34  rm -rf mosquitto.conf
+   35  ll
+   36  id
+   37  sudo rm -rf mosquitto.conf
+   38  ll
+   39  cd ..
+   40  ll
+   41  cd ..
+   42  ll
+   43  id
+   44  ll
+   45  chown -R ubuntu:docker infra/
+   46  sudo chown -R ubuntu:docker infra/
+   47  ll
+   48  cd infra/mosquitto/
+   49  ll
+   50  vi mosquitto.conf
+   51  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d mosquitto
+   52  cd ..
+   53  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d mosquitto
+   54  docker exec mini_scada_mqtt cat /mosquitto/config/mosquitto.conf
+   55  netstat -plnt
+   56  ll
+   57  docker restart backend
+   58  docker compose restart backend
+   59  docker compose up -d backend
+   60  ll
+   61  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d backend
+   62  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d frontend
+   63  docker ps
+   64  docker compose --env-file .env.prod -f docker-compose.prod.yml restart -d backend
+   65  docker compose --env-file .env.prod -f docker-compose.prod.yml restart backend
+   66  docker compose --env-file .env.prod -f docker-compose.prod.yml restart 
+   67  docker ps
+   68  docker compose --env-file .env.prod -f docker-compose.prod.yml restart mosquitto
+   69  ll
+   70  id
+   71  cd /opt
+   72  ll
+   73  chgrp -R  mini-scada
+   74  chgrp -R docker mini-scada
+   75  ll
+   76  cd mini-scada/
+   77  ll
+   78  vi docker-compose.prod.yml
+   79  ll
+   80  vi .env.prod
+   81  openssl rand -base64 32
+   82  openssl rand -base64 64
+   83  ll
+   84  vi docker-compose.prod.yml 
+   85  grep scada *
+   86  vi .env.prod 
+   87  ll
+   88  cat docker-compose.prod.yml
+   89  vi deploy.sh
+   90  ll
+   91  chmod +x /opt/mini-scada/deploy.sh
+   92  ll
+   93  /opt/mini-scada/deploy.sh latest
+   94  sudo apt-get install -y unzip curl
+   95  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+   96  ll
+   97  cd
+   98  ll
+   99  mv /opt/mini-scada/awscliv2.zip .
+  100  ll
+  101  unzip -u awscliv2.zip
+  102  ll
+  103  sudo ./aws/install --update
+  104  aws --version
+  105  ll
+  106  cd /opt/mini-scada/
+  107  ll
+  108  history\
+  109  history
+  110  /opt/mini-scada/deploy.sh latest
+  111  vi .env.prod 
+  112  vi deploy.sh 
+  113  vi docker-compose.prod.yml 
+  114  aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 237586138150.dkr.ecr.ap-northeast-2.amazonaws.com
+  115  vi deploy.sh 
+  116  /opt/mini-scada/deploy.sh latest
+  117  docker ps
+  118  docker images | grep mini-scada
+  119  ll
+  120  cat deploy.sh 
+  121  top -d 1
+  122  docker ps
+  123  docker logs mini_scada_backend --tail 100
+  124  docker logs mini_scada_frontend --tail 100
+  125  curl -I http://localhost:8080
+  126  sudo netstat -plnt
+  127  sudo apt install net-utils
+  128  sudo apt install net-tools -y
+  129  sudo netstat -plnt
+  130  docker ps
+  131  docker logs mini_scada_frontend --tail 100
+  132  ll
+  133  vi docker-compose.prod.yml 
+  134  cat docker-compose.prod.yml 
+  135  vi docker-compose.prod.yml 
+  136  vi Caddyfile
+  137  docker compose --env-file .env.prod -f docker-compose.prod.yml config
+  138  /opt/mini-scada/deploy.sh 7b165d320f8ce44392d4fb01dbafddc1307ecf65
+  139  mkdir caddy
+  140  mv Caddyfile caddy/
+  141  ll
+  142  vi docker-compose.prod.yml 
+  143  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
+  144  netstat -plnt
+  145  docker ps
+  146  curl -i http://127.0.0.1:8080
+  147  curl -i http://127.0.0.1:8080/actuator/health
+  148  curl -i http://127.0.0.1:3000
+  149  curl -i http://127.0.0.1
+  150  curl -i http://43.200.175.247
+  151  docker logs mini_scada_caddy --tail 100
+  152  nslookup scada.swsung72.site
+  153  curl -i http://43.200.175.247
+  154  docker logs mini_scada_caddy --tail 100
+  155  docker restart mini_scada_caddy
+  156  docker logs mini_scada_caddy --tail 100
+  157  vi caddy/Caddyfile 
+  158  docker restart mini_scada_caddy
+  159  docker logs mini_scada_caddy --tail 100
+  160  docker logs mini_scada_frontend --tail 100
+  161  docker exec -it mini_scada_frontend sh -c 'ss -lntp || netstat -lntp'
+  162  docker exec -it mini_scada_caddy sh -c 'wget -S -O- http://frontend:80 || true; wget -S -O- http://frontend:5173 || true; wget -S -O- http://backend:8080 || true'
+  163  vi caddy/Caddyfile 
+  164  docker restart mini_scada_caddy
+  165  curl -i http://scada.swsung72.site
+  166  curl -ik https://scada.swsung72.site
+  167  docker exec -it mini_scada_caddy sh -c 'wget -S -O- http://frontend:5173 || true'
+  168  vi caddy/Caddyfile 
+  169  ll
+  170  cat docker-compose.prod.yml
+  171  vi docker-compose.prod.yml
+  172  docker ps
+  173  ll
+  174  docker restart mini_scada_caddy
+  175  vi .env.prod 
+  176  cat .env.prod 
+  177  cat docker-compose.prod.yml
+  178  docker ps
+  179  ll
+  180  cat docker-compose.prod.yml
+  181  vi deploy.sh 
+  182  docker restart mini_scada_caddy
+  183  docker ps
+  184  docker restart  mini_scada_mqtt
+  185  docker ps
+  186  ll
+  187  cat .evn.prod
+  188  cat .env.prod
+  189  ll
+  190  cd
+  191  ll
+  192  cd /opt/mini-scada/
+  193  ll
+  194  docker ps
+  195  id
+  196  ll
+  197  sudo apt-get update
+  198  sudo apt-get install -y ca-certificates curl
+  199  sudo install -m 0755 -d /etc/apt/keyrings
+  200  sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+  201  sudo chmod a+r /etc/apt/keyrings/docker.asc
+  202  cat  /etc/apt/keyrings/docker.asc
+  203  echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "${VERSION_CODENAME:-$VERSION_ID}") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  204  sudo apt-get update
+  205  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+  206  sudo systemctl enable --now docker
+  207  sudo usermod -aG docker ubuntu
+  208  sudo mkdir -p /opt/mini-scada
+  209  sudo chown -R ubuntu:ubuntu /opt/mini-scada
+  210  cd /opt/mini-scada
+  211  ll
+  212  newgrp docker
+  213  telnet 
+  214  telnet  127.0.0.1 5020
+  215  netstat -plnt
+  216  ss -tlnp | grep 5020
+  217  nc -zv 127.0.0.1 5020
+  218  ifconfig
+  219  history
+  220  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  221  cd /opt/mini-scada/
+  222  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  223  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  224  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  225  ifconfig
+  226  docker exec -it mini_scada_backend nc -zv 172.31.39.129 5020
+  227  docker exec -it mini_scada_backend sh -c "command -v nc || apk add --no-cache netcat-openbsd"
+  228  docker run --rm --network host busybox:1.36 nc -zv 172.31.39.129 5020
+  229  vi docker-compose.prod.yml 
+  230  docker ps
+  231  history
+  232  nc -zv 172.31.39.129 5020
+  233  docker compose exec backend bash
+  234  docker compose --env-file .env.prod -f docker-compose.prod.yml exec backend bash
+  235  exit
+  236  /opt/mini-scada/deploy.sh 071c8aec713dd68549cf75d579d6a01697ddc3cd
+  237  docker ps
+  238  history
+  239  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  240  cd /opt/mini-scada/
+  241  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  242  ifconfig
+  243  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  244  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f mosquitto
+  245  cd
+  246  cd /opt/mini-scada/
+  247  ll
+  248  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f mosquitto
+  249  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  250  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f mosquitto
+  251  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  252  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  253  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  254  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f mosquitto
+  255  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  256  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  257  docker logs
+  258  docker logs -f
+  259  docker logs backend
+  260  docker ps
+  261  docker logs mini_scada_backend
+  262  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f frontend
+  263  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f mosquitto
+  264  cd
+  265  ll
+  266  mkdir simulator
+  267  cd simulator/
+  268  python3
+  269  python3 -m venv .venv
+  270  sudo apt install python3.12-venv
+  271  python3 -m venv .venv
+  272  ll
+  273  source .venv/bin/activate 
+  274  ll
+  275  vi requirements.txt
+  276  pip install -r requirements.txt
+  277  ll
+  278  mkdir app
+  279  cd app
+  280  ll
+  281  vi simulator.py
+  282  ll
+  283  python
+  284  cd ..
+  285  python app/simulator.py 
+  286  vi app/simulator.py 
+  287  python app/simulator.py 
+  288  vi app/simulator.py 
+  289  python app/simulator.py 
+  290  ll
+  291  python app/simulator.py 
+  292  cd /opt/mini-scada/
+  293  ll
+  294  vi .env.prod 
+  295  ll
+  296  cat .env.prod
+  297  cat docker-compose.prod.yml
+  298  ll
+  299  cd caddy/
+  300  ll
+  301  cat Caddyfile
+  302  cd ..
+  303  cat infra/mosquitto/mosquitto.conf 
+  304  ll
+  305  cat deploy.sh
+  306  docker ps
+  307  ll
+  308  cd
+  309  ll
+  310  cd simulator/
+  311  vi app/simulator.py 
+  312  python app/simulator.py 
+  313  python2 app/simulator.py 
+  314  python3 app/simulator.py 
+  315  ll
+  316  history py
+  317  history | grep py
+  318  history | venv
+  319  history | grep venv
+  320  source .venv/bin/activate
+  321  python app/simulator.py
+  322  .venv/bin/python simulator/app/simulator.py
+  323  pwd
+  324  .venv/bin/python /home/ubuntu/simulator/app/simulator.py 
+  325  exit
+  326  cd
+  327  ll
+  328  cd simulator/
+  329  ll
+  330  .venv/bin/python /home/ubuntu/simulator/app/simulator.py 
+  331  docker ps
+  332  history | grep docker
+  333  cd /opt/mini-scada/
+  334  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  335  docker ps
+  336  docker compose --env-file .env.prod -f docker-compose.prod.yml down backend
+  337  docker ps
+  338  docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f backend
+  339  cd
+  340  cd simulator/
+  341  .venv/bin/python /home/ubuntu/simulator/app/simulator.py 
+  342  nohup .venv/bin/python /home/ubuntu/simulator/app/simulator.py 2>&1 &
+  343  ll
+  344  cat nohup.out 
+  345  ll
+  346  crontab
+  347  crontab -l
+  348  crontab -e
+  349  pwd
+  350  find /home/ubuntu/simulator -type f -name "nohup.out" -exec truncate -s 0 {} \;
+  351  ll
+  352  crontab -e
+  353  crontab -;
+  354  crontab -l
+  355  ll
+  356  ps -ef
+  357  ps -ef | grep sim
+  358  cd
+  359  cd /opt/mini-scada/
+  360  vi .env.prod 
+  361  ll
+  362  rm .env.prod.swp
+  363  vi .env.prod 
+  364  ll
+  365  history
+  366  cd /opt/
+  367  ll
+  368  cd mini-scada/
+  369  ll
+  370  cd ..
+  371  cd
+  372  ll
+  373  cd aws
+  374  ll
+  375  cd ..
+  376  ll
+  377  history
+  378  cd
+  379  ll
+  380  history > history.txt

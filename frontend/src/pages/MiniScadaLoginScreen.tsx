@@ -1,6 +1,6 @@
-import { type FormEvent, type ReactNode, useId, useState } from 'react'
+import { type FormEvent, type ReactNode, useEffect, useId, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Activity, Check, Lock, User } from 'lucide-react'
+import { Activity, Check, Info, Lock, User, X } from 'lucide-react'
 import { useAuth } from '../auth/AuthContext'
 
 export default function MiniScadaLoginScreen() {
@@ -10,6 +10,7 @@ export default function MiniScadaLoginScreen() {
   const [password, setPassword] = useState('')
   const [rememberMe, setRememberMe] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(true)
   const userId = useId()
   const passId = useId()
 
@@ -30,6 +31,8 @@ export default function MiniScadaLoginScreen() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(45,212,191,0.18),_transparent_28%),radial-gradient(circle_at_bottom_right,_rgba(250,204,21,0.14),_transparent_24%),linear-gradient(135deg,_#0f172a_0%,_#12324a_42%,_#0f766e_100%)] text-white">
       <ContourLines />
+
+      {demoOpen ? <DemoInfoModal onClose={() => setDemoOpen(false)} /> : null}
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-6 py-10">
         <div className="w-full max-w-[430px]">
@@ -171,6 +174,97 @@ function InputField({
           autoComplete={autoComplete}
           className="w-full bg-transparent text-white placeholder:text-white/55 focus:outline-none"
         />
+      </div>
+    </div>
+  )
+}
+
+function DemoInfoModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="demo-info-title"
+    >
+      <button
+        type="button"
+        className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm"
+        aria-label="닫기"
+        onClick={onClose}
+      />
+
+      <div className="relative w-full max-w-[460px] rounded-[28px] border border-white/12 bg-slate-950/75 px-7 py-7 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-md">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-5 right-5 rounded-full border border-white/12 bg-white/8 p-1.5 text-white/70 transition hover:border-white/25 hover:bg-white/12 hover:text-white"
+          aria-label="닫기"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+
+        <div className="mb-5 flex items-center gap-2.5">
+          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-emerald-200/30 bg-emerald-300/15 text-emerald-100">
+            <Info className="h-4 w-4" aria-hidden />
+          </span>
+          <h2 id="demo-info-title" className="text-lg font-semibold tracking-wide text-white">
+            mini-scada 데모 안내
+          </h2>
+        </div>
+
+        <div className="space-y-4 text-sm leading-relaxed text-white/80">
+          <p>
+            포트폴리오 시연용 서비스입니다.
+            <br />
+            관리자 계정으로 모든 화면을 자유롭게 둘러보실 수 있습니다.
+          </p>
+
+          <div className="overflow-hidden rounded-xl border border-white/12 bg-white/6">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5 text-left text-xs tracking-wide text-white/60 uppercase">
+                  <th className="px-4 py-2.5 font-medium">아이디</th>
+                  <th className="px-4 py-2.5 font-medium">비밀번호</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="px-4 py-3 font-mono text-emerald-100/95">admin</td>
+                  <td className="px-4 py-3 font-mono text-cyan-100/95">admin1234!!</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p className="rounded-lg border border-amber-200/20 bg-amber-100/8 px-3.5 py-2.5 text-amber-50/90">
+            데이터 삭제·수정은 삼가주세요.
+          </p>
+
+          <p className="text-white/70">
+            <span className="font-medium text-white/90">Devices</span> 메뉴 →{' '}
+            <span className="font-medium text-white/90">View detail</span> 버튼을 눌러서 보시면
+            <br />
+            MQTT 실시간 데이터 수신을 확인할 수 있습니다.{' '}
+            <span className="text-white/55">(내부 시뮬레이터 기동)</span>
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 w-full rounded-full bg-gradient-to-r from-emerald-300/90 to-cyan-200/90 py-3 text-sm font-semibold text-slate-900 shadow-lg transition hover:scale-[1.01] hover:from-emerald-200 hover:to-cyan-100"
+        >
+          확인
+        </button>
       </div>
     </div>
   )

@@ -1,0 +1,30 @@
+# EC2 등에서 Caddy 가 80/443 을 받는 경우 예시.
+# 실제 도메인·컨테이너 이름은 환경에 맞게 수정.
+#
+# 브라우저: wss://YOUR_DOMAIN/mqtt → Mosquitto WebSocket (:9001)
+# docker network 에서 Mosquitto 서비스/컨테이너로 연결되면 호스트에 9001 을 열 필요 없음.
+
+{
+	# 로컬 테스트 시만; 운영은 보통 자동 HTTPS
+	# email you@example.com
+}
+
+scada.example.com {
+	encode zstd gzip
+
+	# API → Spring (컨테이너명은 docker compose 에 맞출 것)
+	handle /api/* {
+		reverse_proxy mini_scada_backend:8080
+	}
+
+	# MQTT WebSocket — 브라우저는 /mqtt 로 붙고 Mosquitto 는 보통 루트(/) 로 WS 받음
+	handle /mqtt* {
+		rewrite * /
+		reverse_proxy mini_scada_mqtt:9001
+	}
+
+	# 프론트 (Nginx 정적)
+	handle {
+		reverse_proxy mini_scada_frontend:80
+	}
+}
