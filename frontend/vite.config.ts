@@ -12,6 +12,10 @@ const apiProxyTarget = process.env.VITE_PROXY_TARGET ?? 'http://127.0.0.1:8080'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: '0.0.0.0',
+    allowedHosts: [
+      'scada.swsung72.site',
+    ],
     proxy: {
       '/api': {
         target: apiProxyTarget,

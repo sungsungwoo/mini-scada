@@ -2,7 +2,8 @@ services:
   timescaledb:
     image: timescale/timescaledb:2.14.2-pg15
     container_name: mini_scada_db
-    restart: always
+    #restart: always
+    restart: no
     env_file:
       - .env
     environment:
@@ -25,7 +26,8 @@ services:
   mosquitto:
     image: eclipse-mosquitto:2
     container_name: mini_scada_mqtt
-    restart: always
+    #restart: always
+    restart: no
     ports:
       - "1883:1883"
       - "9001:9001"
